@@ -308,14 +308,12 @@ function MapController({ locations, selectedLocation }: MapControllerProps) {
   return null
 }
 
-const TILE_LIGHT = {
+// A single tile source for both themes (plain OSM, no API key ever required) — dark mode is a
+// CSS filter on the tile layer itself, not a separate basemap provider. Avoids depending on a
+// second free-tier CDN (CARTO's dark_all tiles started requiring a key, breaking dark mode).
+const TILE = {
   url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-}
-
-const TILE_DARK = {
-  url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
 }
 
 interface Props {
@@ -327,7 +325,6 @@ interface Props {
 }
 
 export function MapView({ locations, selectedLocation, isDark, loading, loadingMessage }: Props) {
-  const tile = isDark ? TILE_DARK : TILE_LIGHT
   return (
     <div style={{ flex: 1, position: 'relative' }}>
       <MapContainer
@@ -341,8 +338,16 @@ export function MapView({ locations, selectedLocation, isDark, loading, loadingM
         style={{ height: '100%', width: '100%' }}
         zoomControl={true}
       >
-        {/* Repeating tiles (no noWrap) give continuous, endless E↔W scrolling. */}
-        <TileLayer key={tile.url} attribution={tile.attribution} url={tile.url} />
+        {/* Repeating tiles (no noWrap) give continuous, endless E↔W scrolling. Dark mode inverts
+            these same tiles via CSS (className below) rather than switching tile providers.
+            Leaflet only reads `className` at layer creation, not on update, so the key must
+            change with the theme to force a remount. */}
+        <TileLayer
+          key={isDark ? 'dark' : 'light'}
+          attribution={TILE.attribution}
+          url={TILE.url}
+          className={isDark ? 'map-tiles-dark' : undefined}
+        />
         <MapController locations={locations} selectedLocation={selectedLocation} />
       </MapContainer>
       {locations.length > 0 && <Legend />}

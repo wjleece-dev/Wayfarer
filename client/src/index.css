@@ -82,6 +82,12 @@ body,
   font-family: Helvetica, Arial, sans-serif !important;
 }
 
+/* Dark-mode map: invert the plain OSM tiles rather than depend on a separate dark basemap
+   provider (see MapView.tsx). Re-invert the hue rotation back so water/green read naturally. */
+.map-tiles-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
