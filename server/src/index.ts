@@ -13,6 +13,11 @@ dotenv.config({ path: path.resolve(process.cwd(), '../.env') })
 const app = express()
 const PORT = process.env.PORT ?? 3001
 
+// Number of reverse proxies in front of this server (nginx in compose, plus Caddy in production).
+// Without it req.ip is the nearest proxy's address, so the per-IP rate limit below collapses into
+// one shared bucket for every visitor. Keep it exact: too high lets clients spoof X-Forwarded-For.
+app.set('trust proxy', Number(process.env.TRUST_PROXY ?? 0))
+
 // CORS: only the configured origins may call the API (no more wildcard `*`).
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173')
   .split(',').map(o => o.trim()).filter(Boolean)

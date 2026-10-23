@@ -2,9 +2,12 @@ services:
   server:
     build: ./server
     ports:
-      - "3013:3013" # published for direct API access/debugging; the client reaches it via nginx
+      - "127.0.0.1:3013:3013" # loopback only: direct API access for debugging; the client reaches it via nginx
     environment:
       PORT: 3013
+      # Proxies in front of the server: 1 = nginx alone (local compose). A deploy that also puts a
+      # reverse proxy such as Caddy in front sets 2 in its .env so the rate limit sees real client IPs.
+      TRUST_PROXY: ${TRUST_PROXY:-1}
       # Compose auto-loads a .env next to this file for ${...} substitution. Default assumes
       # local (docker compose up on localhost:8080); a deploy's own .env overrides this to its
       # real public origin (e.g. https://wayfarer.wjleece.dev) without editing this committed file.
@@ -18,7 +21,7 @@ services:
   client:
     build: ./client
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80" # loopback only: put a TLS reverse proxy in front for public access
     depends_on:
       server:
         condition: service_healthy
